@@ -1,0 +1,9 @@
+Debug
+Release
+.o
+*.o
+ipch
+obj
+bin
+*.layout
+*.cbp
