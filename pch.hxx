@@ -17,8 +17,11 @@
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
 #include <boost/spirit/home/support/utree.hpp>
-#include <boost/spirit/include/qi_symbols.hpp>
+#include <boost/spirit/include/qi_symbols.hpp> 
+#include <boost/config/warning_disable.hpp>
 
+#include <iostream>
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <string>

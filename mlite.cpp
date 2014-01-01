@@ -28,130 +28,98 @@
 // #define BOOST_SPIRIT_DEBUG
 #include "pch.hxx"
 
-#include <boost/config/warning_disable.hpp>
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/support_utree.hpp>
+ namespace cset = boost::spirit::ascii;
+namespace client {
+    namespace qi = boost::spirit::qi;
+    namespace spirit = boost::spirit;
 
-#include <iostream>
-#include <string>
+    namespace phoenix = boost::phoenix;
+    using boost::spirit::omit;
+    using boost::spirit::no_skip;
+    using boost::spirit::raw;
+    using boost::spirit::double_;
+    using boost::spirit::utree;
+    using qi::lit;
+    using qi::lexeme;
+    using qi::on_error;
+    using qi::fail;
+    using cset::char_;
+    using cset::string;
+    using cset::digit;
+    using cset::lower;
+    using cset::digit;
+    using cset::alpha;
+    using cset::alnum;
+    using namespace qi::labels;
+    using phoenix::construct;
+    using phoenix::val;
+    using qi::symbols;
 
-namespace client
-{
-namespace qi = boost::spirit::qi;
-namespace spirit = boost::spirit;
-namespace ascii = boost::spirit::ascii;
-namespace phoenix = boost::phoenix;
-using boost::spirit::omit;
-using boost::spirit::no_skip;
-using boost::spirit::raw;
-using boost::spirit::double_;
-using boost::spirit::utree;
-using qi::lit;
-using qi::lexeme;
-using qi::on_error;
-using qi::fail;
-using ascii::char_;
-using ascii::string;
-using ascii::alpha;
-using ascii::alnum;
-using namespace qi::labels;
-using phoenix::construct;
-using phoenix::val;
-using qi::symbols;
+    ///////////////////////////////////////////////////////////////////////////////
+    //  Our mlite grammar
+    ///////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////
-//  Our mlite grammar
-///////////////////////////////////////////////////////////////////////////////
-template <typename Iterator>
-struct mlite : qi::grammar<Iterator, ascii::space_type, spirit::utree()>
-{
-    mlite() : mlite::base_type(package_decl)
-{
-    using qi::uint_;
-    using qi::char_;
+    template <typename Iterator>
+    struct mlite : qi::grammar<Iterator, cset::space_type, spirit::utree()> {
 
-    KEYWORDS_TABLE ="algorithm", "and", "annotation", "assert", "block", "break", "class", "connect", "connector", "constant", "constrainedby", "der", "discrete", "each", "else", "elseif",
-    "elsewhen", "encapsulated", "end", "enumeration", "equation", "expandable", "extends", "external", "false", "final", "flow", "for", "function", "import", "if", "in", "initial", "inner",
-    "input", "loop", "model", "not", "or", "outer", "output", "package", "parameter", "partial", "protected", "public", "record", "redeclare", "replaceable", "return", "then", "true",
-    "type", "when", "while", "within";
+        mlite() : mlite::base_type(package_decl) {
+            using qi::uint_;
+            using qi::char_;
 
+            KEYWORDS_TABLE = "algorithm", "and", "annotation", "assert", "block", "break", "class", "connect", "connector", "constant", "constrainedby", "der", "discrete", "each", "else", "elseif",
+                    "elsewhen", "encapsulated", "end", "enumeration", "equation", "expandable", "extends", "external", "false", "final", "flow", "for", "function", "import", "if", "in", "initial", "inner",
+                    "input", "loop", "model", "not", "or", "outer", "output", "package", "parameter", "partial", "protected", "public", "record", "redeclare", "replaceable", "return", "then", "true",
+                    "type", "when", "while", "within"; 
+            package_decl = -(lit("within") >> *alnum >> SEMICOLON) >> class_decl;
+            class_decl = *(-lit("final") >> *alnum >> SEMICOLON);
+            IDENT=lexeme[(char_("_")|alpha)>>*(char_("_")|alnum)];
+            name=IDENT%DOT;
+            STRING=lexeme['"'>>(*char_-'"')>>'"']; 
+            UNSIGNED_NUMBER= (!lit('-'))>>double_; 
+        }
 
-    package_decl= -( lit("within") >> *alnum >> ';') >> class_decl;
-    class_decl=*( -lit("final") >> *alnum >> ';');
+        qi::symbols< > KEYWORDS_TABLE;
 
-
-#if 0
-    expression =
-        term
-        >> *(   (char_('+') >> term)
-                |   (char_('-') >> term)
-            )
-        ;
-
-    term =
-        factor
-        >> *(   (char_('*') >> factor)
-                |   (char_('/') >> factor)
-            )
-        ;
-
-    factor =
-        uint_
-        |   '(' >> expression >> ')'
-        |   (char_('-') >> factor)
-        |   (char_('+') >> factor)
-        ;
-#endif
-
-
-}
-
-qi::symbols< >  KEYWORDS_TABLE;
-
-qi::rule<Iterator, ascii::space_type, spirit::utree()> package_decl;
-
-qi::rule<Iterator,ascii::space_type>    DOT=lit('.'),
-                                         COLON=lit(':'),
-                                         DER=lit("der"),
-                                         ELSE=lit("else"),
-                                         IF=lit("if"),
-                                         WHEN=lit("when"),
-                                         WHILE=lit("while"),
-                                         THEN=lit("then"),
-                                         FOR=lit("for"),
-                                         END=lit("end"),
-                                         OR=lit("or"),
-                                         AND=lit("and"),
-                                         FINAL=lit("final"),
-                                         COMMA=lit(','),
-                                         EQ=lit('='),
-                                         SEMICOLON=lit(','),
-                                         LOOP=lit("loop"),
-                                         ELSEWHEN=lit("elsewhen"),
-                                         ELSEIF=lit("elseif"),
-                                         FUNCTION=lit("function"),
-                                         CLASS=lit("class"),
-                                         INITIAL=lit("initial");
+        qi::rule<Iterator, cset::space_type, spirit::utree() > package_decl , class_decl,STRING,IDENT,name,UNSIGNED_NUMBER,
+        DOT = lit('.'),
+        COLON = lit(':'),
+        DER = lit("der"),
+        ELSE = lit("else"),
+        IF = lit("if"),
+        WHEN = lit("when"),
+        WHILE = lit("while"),
+        THEN = lit("then"),
+        FOR = lit("for"),
+        END = lit("end"),
+        OR = lit("or"),
+        AND = lit("and"),
+        FINAL = lit("final"),
+        COMMA = lit(','),
+        EQ = lit('='),
+        SEMICOLON = lit(';'),
+        LOOP = lit("loop"),
+        ELSEWHEN = lit("elsewhen"),
+        ELSEIF = lit("elseif"),
+        FUNCTION = lit("function"),
+        CLASS = lit("class"),
+        INITIAL = lit("initial")
+                ;
 
 
-                                         qi::rule<Iterator, ascii::space_type, spirit::utree::list_type()> class_decl;
-                                         //     qi::rule<Iterator, ascii::space_type, spirit::utree()> expression;
-                                         //    qi::rule<Iterator, ascii::space_type, spirit::utree::list_type()> term;
-                                         //    qi::rule<Iterator, ascii::space_type, spirit::utree::list_type()> factor;
-};
+    };
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Main program
 ///////////////////////////////////////////////////////////////////////////////
-int main()
-{
+
+int main() {
     std::cout << "/////////////////////////////////////////////////////////\n\n";
     std::cout << "Expression parser...\n\n";
     std::cout << "/////////////////////////////////////////////////////////\n\n";
     std::cout << "Type an expression...or [q or Q] to quit\n\n";
 
-    using boost::spirit::ascii::space;
+    using cset::space;
     using boost::spirit::utree;
     typedef std::string::const_iterator iterator_type;
     typedef client::mlite<iterator_type> mlite;
@@ -159,8 +127,7 @@ int main()
     mlite calc; // Our grammar
 
     std::string str;
-    while (std::getline(std::cin, str))
-    {
+    while (std::getline(std::cin, str)) {
         if (str.empty() || str[0] == 'q' || str[0] == 'Q')
             break;
 
@@ -169,14 +136,11 @@ int main()
         utree ut;
         bool r = phrase_parse(iter, end, calc, space, ut);
 
-        if (r && iter == end)
-        {
+        if (r && iter == end) {
             std::cout << "-------------------------\n";
             std::cout << "Parsing succeeded: " << ut << "\n";
             std::cout << "-------------------------\n";
-        }
-        else
-        {
+        } else {
             std::string rest(iter, end);
             std::cout << "-------------------------\n";
             std::cout << "Parsing failed\n";
